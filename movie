@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamFlix - Corporate Streaming Platform</title>
+  <meta name="description" content="Professional on-demand corporate streaming platform clone with dynamic navigation, live search, interactive video modal, and monetization banner integration.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              red: '#E50914',
+              hover: '#C11119',
+              dark: '#0b0b0e',
+              surface: '#141419',
+              card: '#1a1a22',
+              border: '#262630',
+              textMuted: '#94a3b8'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Bebas Neue', 'Impact', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter & Bebas Neue -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0b0e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2a2a35;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #E50914;
+    }
+
+    /* Light mode scrollbar */
+    html:not(.dark) ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    html:not(.dark) ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+    }
+
+    /* Smooth transitions */
+    .theme-transition {
+      transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* Horizontal scroll hide bar */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+
+<body class="bg-[#0b0b0e] text-slate-100 font-sans antialiased overflow-x-hidden theme-transition" id="app-body">
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- VIDEO MODAL PLAYER POPUP -->
+  <div id="video-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+    <div class="relative w-full max-w-4xl mx-4 bg-[#141419] dark:bg-[#141419] rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50 transform scale-95 transition-transform duration-300" id="video-modal-card">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-[#0f0f14]">
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 text-xs font-bold bg-[#E50914] text-white rounded">NOW PLAYING</span>
+          <h3 id="modal-movie-title" class="text-lg font-bold text-white truncate max-w-md">Money Heist</h3>
+        </div>
+        <button id="modal-close-btn" class="p-2 rounded-full text-slate-400 hover:text-white hover:bg-white/10 transition" title="Close player">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Video Player Area -->
+      <div class="relative aspect-video bg-black flex items-center justify-center group">
+        <video id="main-video-player" class="w-full h-full object-contain" controls poster="https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=1200&q=85">
+          <source id="video-source" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" type="video/mp4">
+          Your browser does not support HTML5 video.
+        </video>
+      </div>
+
+      <!-- Modal Footer Details -->
+      <div class="p-6 bg-[#141419] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3 text-sm text-slate-400 mb-1">
+            <span id="modal-movie-category" class="text-[#E50914] font-semibold">Action / Crime</span>
+            <span>•</span>
+            <span id="modal-movie-year">2021</span>
+            <span>•</span>
+            <span id="modal-movie-rating" class="px-1.5 py-0.5 text-xs border border-slate-700 rounded text-slate-300">TV-MA</span>
+            <span>•</span>
+            <span id="modal-movie-match" class="text-emerald-400 font-medium">98% Match</span>
+          </div>
+          <p id="modal-movie-desc" class="text-sm text-slate-300 max-w-2xl">Masterminded by The Professor, a gang of unusual robbers attempts the grandest heist in modern history.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="modal-directlink-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-white/10 hover:bg-white/20 text-white rounded-lg transition">
+            <i data-lucide="external-link" class="w-4 h-4"></i>
+            <span>Stream Source (Ad)</span>
+          </button>
+          <button id="modal-watchlist-btn" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[#E50914] hover:bg-[#C11119] text-white rounded-lg transition">
+            <i data-lucide="bookmark-plus" class="w-4 h-4"></i>
+            <span>Add to List</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION WRAPPER (Responsive Flexbox Layout) -->
+  <div class="flex min-h-screen">
+
+    <!-- LEFT SIDEBAR -->
+    <aside id="main-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-[#101015] border-r border-[#1f1f28] flex flex-col transition-transform duration-300 -translate-x-full md:translate-x-0 theme-transition">
+      <!-- Brand Logo -->
+      <div class="h-20 flex items-center px-6 gap-3 border-b border-[#1f1f28]/60">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#E50914] to-red-600 flex items-center justify-center shadow-lg shadow-red-900/30">
+          <i data-lucide="play" class="w-5 h-5 text-white fill-white ml-0.5"></i>
+        </div>
+        <div>
+          <span class="text-2xl font-black tracking-wider text-[#E50914] font-display">STREAMFLIX</span>
+          <span class="block text-[10px] uppercase font-bold tracking-widest text-slate-400">STUDIO HUB</span>
+        </div>
+      </div>
+
+      <!-- Navigation Menus (Dynamic State Management) -->
+      <div class="flex-1 overflow-y-auto px-4 py-6 space-y-8 no-scrollbar">
+        <!-- Main Menu Section -->
+        <div>
+          <span class="px-3 text-[11px] font-bold tracking-wider uppercase text-slate-500">Menu</span>
+          <nav class="mt-2 space-y-1">
+            <button data-nav="home" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-white bg-[#E50914] shadow-md shadow-red-900/20">
+              <i data-lucide="home" class="w-4 h-4"></i>
+              <span>Home</span>
+            </button>
+            <button data-nav="watchlist" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-white hover:bg-white/5">
+              <i data-lucide="bookmark" class="w-4 h-4"></i>
+              <span>Watch List</span>
+              <span id="watchlist-badge" class="ml-auto text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">3</span>
+            </button>
+            <button data-nav="coming-soon" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-white hover:bg-white/5">
+              <i data-lucide="calendar" class="w-4 h-4"></i>
+              <span>Coming Soon</span>
+            </button>
+            <button data-nav="discovery" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-white hover:bg-white/5">
+              <i data-lucide="compass" class="w-4 h-4"></i>
+              <span>Discovery</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Social & Community Section -->
+        <div>
+          <span class="px-3 text-[11px] font-bold tracking-wider uppercase text-slate-500">Social</span>
+          <nav class="mt-2 space-y-1">
+            <button data-nav="friends" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-white hover:bg-white/5">
+              <i data-lucide="users" class="w-4 h-4"></i>
+              <span>Friends</span>
+            </button>
+            <button data-nav="parties" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-white hover:bg-white/5">
+              <i data-lucide="tv" class="w-4 h-4"></i>
+              <span>Parties</span>
+              <span class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">LIVE</span>
+            </button>
+            <button data-nav="media" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-white hover:bg-white/5">
+              <i data-lucide="folder-kanban" class="w-4 h-4"></i>
+              <span>Media</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- General Section -->
+        <div>
+          <span class="px-3 text-[11px] font-bold tracking-wider uppercase text-slate-500">General</span>
+          <nav class="mt-2 space-y-1">
+            <button data-nav="setting" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-white hover:bg-white/5">
+              <i data-lucide="settings" class="w-4 h-4"></i>
+              <span>Setting</span>
+            </button>
+            <button id="btn-logout" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-red-400 hover:bg-red-500/10">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+              <span>Log Out</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- User Profile Card in Sidebar Footer -->
+      <div class="p-4 border-t border-[#1f1f28]/60 bg-[#0d0d12]">
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80" alt="Biradhwaj Avatar" class="w-10 h-10 rounded-full object-cover border border-slate-700">
+            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#101015] rounded-full"></span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-sm font-semibold text-white truncate">Biradhwaj</h4>
+            <p class="text-xs text-slate-400 truncate">Graphic Designer</p>
+          </div>
+          <button id="btn-profile-badge" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition" title="Profile Details">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MOBILE SIDEBAR BACKDROP -->
+    <div id="mobile-backdrop" class="fixed inset-0 bg-black/60 z-30 opacity-0 pointer-events-none transition-opacity duration-300 md:hidden"></div>
+
+    <!-- MAIN APP CONTAINER (Content & Right Rail) -->
+    <div class="flex-1 flex flex-col md:pl-64 min-w-0">
+
+      <!-- TOP NAVBAR -->
+      <header class="sticky top-0 z-30 h-20 bg-[#0b0b0e]/95 backdrop-blur-md border-b border-[#1a1a24] px-4 md:px-8 flex items-center justify-between gap-4 theme-transition" id="main-header">
+        
+        <!-- Left: Mobile Menu Toggle & Brand for Mobile -->
+        <div class="flex items-center gap-3">
+          <button id="mobile-menu-toggle" class="p-2 rounded-xl text-slate-300 hover:bg-white/5 md:hidden" title="Toggle Navigation">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+          <div class="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <span>CORPORATE CLOUD STREAM 4K</span>
+          </div>
+        </div>
+
+        <!-- Center: Live Search Bar -->
+        <div class="flex-1 max-w-xl">
+          <div class="relative group">
+            <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#E50914] transition"></i>
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="Search by title, genre, cast or director..." 
+              class="w-full pl-10 pr-10 py-2 text-sm bg-[#15151c] text-slate-100 placeholder-slate-400 rounded-xl border border-[#23232f] focus:outline-none focus:border-[#E50914] focus:ring-1 focus:ring-[#E50914] transition"
+            >
+            <button id="search-clear-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 hidden">
+              <i data-lucide="circle-x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Actions & Theme Toggle -->
+        <div class="flex items-center gap-3">
+          <!-- Notification Bell -->
+          <div class="relative">
+            <button id="btn-notification" class="p-2.5 rounded-xl bg-[#15151c] border border-[#23232f] text-slate-300 hover:text-white hover:border-slate-600 transition relative" title="Notifications">
+              <i data-lucide="bell" class="w-4 h-4"></i>
+              <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#E50914]"></span>
+            </button>
+          </div>
+
+          <!-- Night / Light Mode Toggle Button -->
+          <button id="theme-toggle-btn" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#15151c] border border-[#23232f] text-slate-200 hover:text-white hover:border-slate-600 text-xs font-semibold transition" title="Toggle Theme">
+            <i data-lucide="moon" id="theme-icon" class="w-4 h-4 text-amber-400"></i>
+            <span id="theme-text">Night</span>
+          </button>
+
+          <!-- Direct Link Quick Access Button -->
+          <button id="btn-direct-link-top" class="hidden lg:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-red-600 to-[#E50914] text-white text-xs font-bold hover:shadow-lg hover:shadow-red-900/30 transition">
+            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+            <span>VIP Stream</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- MAIN LAYOUT BODY (Content Area + Right Sidebar) -->
+      <div class="flex-1 flex flex-col xl:flex-row min-w-0">
+
+        <!-- DYNAMIC CONTENT CONTAINER (Driven by JavaScript State) -->
+        <main class="flex-1 p-4 md:p-8 min-w-0" id="main-content-view">
+          
+          <!-- SEARCH RESULTS OVERLAY SECTION (Toggled when searching) -->
+          <div id="search-results-section" class="hidden mb-8">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i data-lucide="search" class="w-5 h-5 text-[#E50914]"></i>
+                <span>Search Results for: <span id="search-query-display" class="text-slate-400 italic font-normal"></span></span>
+              </h2>
+              <span id="search-count" class="text-xs font-medium px-2 py-1 rounded bg-slate-800 text-slate-300">0 found</span>
+            </div>
+            <div id="search-results-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- VIEW 1: HOME FEED (Default) -->
+          <div id="view-home" class="view-panel space-y-8">
+            
+            <!-- CELEBRITIES STORIES BAR -->
+            <section>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xs font-bold tracking-wider uppercase text-slate-400 flex items-center gap-2">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#E50914]"></i>
+                  <span>Popular Celebrities</span>
+                </h3>
+                <button class="btn-toast-viewmore text-xs font-semibold text-[#E50914] hover:underline">View All</button>
+              </div>
+              <div class="flex items-center gap-4 overflow-x-auto pb-2 no-scrollbar" id="celebrity-stories-bar">
+                <!-- Injected via JS -->
+              </div>
+            </section>
+
+            <!-- HERO CAROUSEL BANNER -->
+            <section class="relative rounded-2xl overflow-hidden border border-[#242432] shadow-2xl bg-gradient-to-r from-black/90 to-transparent group" id="hero-banner">
+              <div class="relative h-[380px] sm:h-[420px] md:h-[460px] w-full">
+                <!-- Background Image -->
+                <img id="hero-bg-img" src="https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=1400&q=85" alt="Hero Banner" class="absolute inset-0 w-full h-full object-cover object-center transition-all duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-[#0b0b0e] via-[#0b0b0e]/70 to-transparent"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-[#0b0b0e] via-[#0b0b0e]/40 to-transparent"></div>
+
+                <!-- Hero Content Overlay -->
+                <div class="absolute bottom-0 left-0 p-6 md:p-10 max-w-2xl z-10">
+                  <div class="flex flex-wrap items-center gap-2.5 mb-3">
+                    <span class="px-2.5 py-1 text-xs font-black tracking-wider bg-[#E50914] text-white rounded">NEW SEASON</span>
+                    <span id="hero-match" class="text-xs font-bold text-emerald-400 px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800">98% Match</span>
+                    <span id="hero-rating" class="text-xs font-medium px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700">TV-MA</span>
+                    <span id="hero-duration" class="text-xs text-slate-400 font-medium">50m per ep</span>
+                  </div>
+
+                  <h1 id="hero-title" class="text-4xl sm:text-5xl md:text-6xl font-black text-white font-display tracking-wide mb-2 drop-shadow-md">MONEY HEIST</h1>
+                  
+                  <p id="hero-category" class="text-sm font-semibold text-slate-300 mb-2">Action / Crime / Thriller • Season 5 Finale</p>
+                  
+                  <p id="hero-description" class="text-xs sm:text-sm text-slate-400 line-clamp-3 mb-6 max-w-xl leading-relaxed">
+                    An unusual group of robbers attempt to carry out the most perfect robbery in Spanish history - stealing 2.4 billion euros from the Royal Mint of Spain, masterminded by The Professor.
+                  </p>
+
+                  <div class="flex items-center gap-3">
+                    <!-- Watch Button (Dual Action) -->
+                    <button id="hero-watch-btn" class="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#E50914] hover:bg-[#C11119] text-white font-bold text-sm shadow-xl shadow-red-900/30 transition transform hover:-translate-y-0.5">
+                      <i data-lucide="play" class="w-4 h-4 fill-white"></i>
+                      <span>Watch Trailer</span>
+                    </button>
+                    <!-- Add to Watchlist -->
+                    <button id="hero-add-btn" class="flex items-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm backdrop-blur-md border border-white/10 transition">
+                      <i data-lucide="bookmark-plus" class="w-4 h-4"></i>
+                      <span>Add to List</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Carousel Slide Indicators -->
+                <div class="absolute bottom-6 right-6 z-10 flex items-center gap-2" id="hero-indicators">
+                  <button class="hero-indicator w-8 h-1.5 rounded-full bg-[#E50914] transition-all" data-slide="0"></button>
+                  <button class="hero-indicator w-2.5 h-1.5 rounded-full bg-white/30 hover:bg-white/60 transition-all" data-slide="1"></button>
+                  <button class="hero-indicator w-2.5 h-1.5 rounded-full bg-white/30 hover:bg-white/60 transition-all" data-slide="2"></button>
+                </div>
+              </div>
+            </section>
+
+            <!-- SECTION: NEW RELEASE (Continue Watching / New Releases) -->
+            <section id="section-new-release">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-5 bg-[#E50914] rounded-full"></span>
+                  <h3 class="text-lg font-bold text-white tracking-wide">New Release & Trending</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="btn-toast-viewmore text-xs font-semibold text-slate-400 hover:text-white transition">Explore Category &rarr;</button>
+                </div>
+              </div>
+
+              <!-- Grid Cards -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="new-release-grid">
+                <!-- Rendered by JS -->
+              </div>
+            </section>
+
+            <!-- ========================================================================= -->
+            <!-- [MONETISASI WAJIB 1]: BANNER_HORIZONTAL PERSIS DI BAWAH SECTION NEW RELEASE -->
+            <!-- ========================================================================= -->
+            <section class="my-6">
+              <div class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1.5 flex items-center justify-between">
+                <span>Sponsored Advertisement (728x90)</span>
+                <span class="text-slate-600">Leaderboard</span>
+              </div>
+              <!-- BANNER_HORIZONTAL CONTAINER -->
+              <div class="w-full overflow-hidden rounded-xl border border-slate-800 bg-[#121218] p-2 flex items-center justify-center min-h-[90px] hover:border-slate-700 transition" id="banner-horizontal-slot">
+                <!-- Paste script iklan horizontal 728x90 di sini -->
+                <a href="https://www.contoh-direct-link-adsterra.com/xyz123" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-between px-6 py-3 bg-gradient-to-r from-red-950/40 via-[#181822] to-slate-900 border border-red-900/30 rounded-lg group">
+                  <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-[#E50914]/20 border border-[#E50914]/40 flex items-center justify-center text-[#E50914]">
+                      <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                      <span class="text-xs font-bold text-white group-hover:text-red-400 transition">ADSTERRA 728x90 HORIZONTAL LEADERBOARD BANNER</span>
+                      <p class="text-[11px] text-slate-400">Click to unlock unlimited 4K ultra-speed corporate streaming access</p>
+                    </div>
+                  </div>
+                  <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#E50914] text-white rounded-lg group-hover:bg-[#C11119] transition">
+                    Visit Sponsor
+                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                  </span>
+                </a>
+              </div>
+            </section>
+            <!-- ========================================================================= -->
+
+            <!-- SECTION: TOP RATED & POPULAR ON PLATFORM -->
+            <section>
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-5 bg-amber-500 rounded-full"></span>
+                  <h3 class="text-lg font-bold text-white tracking-wide">Top Rated Hits</h3>
+                </div>
+                <button class="btn-toast-viewmore text-xs font-semibold text-slate-400 hover:text-white">View More</button>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="top-rated-grid">
+                <!-- Rendered by JS -->
+              </div>
+            </section>
+
+          </div>
+
+          <!-- VIEW 2: WATCH LIST -->
+          <div id="view-watchlist" class="view-panel hidden space-y-6">
+            <div class="flex items-center justify-between border-b border-[#23232f] pb-4">
+              <div>
+                <h2 class="text-2xl font-black text-white font-display tracking-wide">MY WATCHLIST</h2>
+                <p class="text-xs text-slate-400">Titles saved for offline viewing and streaming bookmarks</p>
+              </div>
+              <button id="btn-clear-watchlist" class="text-xs font-semibold text-red-400 hover:text-red-300">Clear All</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" id="watchlist-items-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- VIEW 3: COMING SOON -->
+          <div id="view-coming-soon" class="view-panel hidden space-y-6">
+            <div class="border-b border-[#23232f] pb-4">
+              <h2 class="text-2xl font-black text-white font-display tracking-wide">COMING SOON</h2>
+              <p class="text-xs text-slate-400">Upcoming premieres, teasers, and theatrical releases scheduled this quarter</p>
+            </div>
+            <div class="space-y-4" id="coming-soon-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- VIEW 4: DISCOVERY -->
+          <div id="view-discovery" class="view-panel hidden space-y-6">
+            <div class="border-b border-[#23232f] pb-4">
+              <h2 class="text-2xl font-black text-white font-display tracking-wide">DISCOVERY & CATEGORIES</h2>
+              <p class="text-xs text-slate-400">Filter by mood, cinematography style, production studio, and global region</p>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="discovery-genres-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- VIEW 5: FRIENDS -->
+          <div id="view-friends" class="view-panel hidden space-y-6">
+            <div class="border-b border-[#23232f] pb-4">
+              <h2 class="text-2xl font-black text-white font-display tracking-wide">FRIENDS & ACTIVITY</h2>
+              <p class="text-xs text-slate-400">See what your social streaming network is watching right now</p>
+            </div>
+            <div class="space-y-4" id="friends-detailed-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- VIEW 6: PARTIES -->
+          <div id="view-parties" class="view-panel hidden space-y-6">
+            <div class="border-b border-[#23232f] pb-4">
+              <h2 class="text-2xl font-black text-white font-display tracking-wide">WATCH PARTIES (SYNC ROOMS)</h2>
+              <p class="text-xs text-slate-400">Host or join synchronized streaming rooms with interactive audio chat</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5" id="watch-parties-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- VIEW 7: MEDIA -->
+          <div id="view-media" class="view-panel hidden space-y-6">
+            <div class="border-b border-[#23232f] pb-4">
+              <h2 class="text-2xl font-black text-white font-display tracking-wide">MEDIA LIBRARY</h2>
+              <p class="text-xs text-slate-400">Downloaded local copies, audio stems, and director commentary tracks</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="media-library-grid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- VIEW 8: SETTINGS -->
+          <div id="view-setting" class="view-panel hidden space-y-6">
+            <div class="border-b border-[#23232f] pb-4">
+              <h2 class="text-2xl font-black text-white font-display tracking-wide">ACCOUNT & STREAMING SETTINGS</h2>
+              <p class="text-xs text-slate-400">Configure playback bitrate, subtitles, hardware acceleration, and notifications</p>
+            </div>
+            <div class="bg-[#14141c] border border-[#23232f] rounded-2xl p-6 space-y-6 max-w-2xl">
+              <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div>
+                  <h4 class="text-sm font-semibold text-white">Default Streaming Quality</h4>
+                  <p class="text-xs text-slate-400">Adjust video bitrate based on connection</p>
+                </div>
+                <select class="bg-[#1c1c27] text-xs font-semibold text-white border border-slate-700 rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#E50914]">
+                  <option>4K Ultra HD (HDR / Dolby Vision)</option>
+                  <option>1080p Full HD</option>
+                  <option>720p HD Data Saver</option>
+                </select>
+              </div>
+
+              <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div>
+                  <h4 class="text-sm font-semibold text-white">Autoplay Next Episode</h4>
+                  <p class="text-xs text-slate-400">Seamless playback for TV series</p>
+                </div>
+                <input type="checkbox" checked class="w-4 h-4 accent-[#E50914]">
+              </div>
+
+              <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div>
+                  <h4 class="text-sm font-semibold text-white">Hardware Acceleration</h4>
+                  <p class="text-xs text-slate-400">Leverage GPU for 60fps video decoding</p>
+                </div>
+                <input type="checkbox" checked class="w-4 h-4 accent-[#E50914]">
+              </div>
+
+              <div class="flex justify-end gap-3 pt-2">
+                <button id="btn-save-settings" class="px-5 py-2.5 bg-[#E50914] hover:bg-[#C11119] text-white text-xs font-bold rounded-xl transition">
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- RIGHT SIDEBAR / RAIL (Popular Movies, Monetisasi Kotak, Favorites & Activity) -->
+        <aside class="w-full xl:w-80 bg-[#0f0f15] border-t xl:border-t-0 xl:border-l border-[#1f1f2a] p-6 space-y-8 theme-transition" id="right-rail">
+          
+          <!-- SECTION 1: POPULAR MOVIES -->
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <i data-lucide="flame" class="w-4 h-4 text-[#E50914]"></i>
+                <span>Popular Movies</span>
+              </h4>
+              <button class="btn-toast-viewmore text-xs font-semibold text-slate-500 hover:text-white">See All</button>
+            </div>
+            
+            <div class="space-y-3" id="popular-movies-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- ========================================================================= -->
+          <!-- [MONETISASI WAJIB 2]: BANNER_KOTAK PERSIS DI ANTARA POPULAR & FAVORITES -->
+          <!-- ========================================================================= -->
+          <div class="py-2">
+            <div class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2 flex items-center justify-between">
+              <span>Sponsor (300x250)</span>
+              <span class="text-slate-600">MREC Ad</span>
+            </div>
+            <!-- BANNER_KOTAK CONTAINER -->
+            <div class="w-full mx-auto max-w-[300px] h-[250px] bg-[#161622] rounded-xl border border-slate-800 p-3 flex flex-col justify-between hover:border-slate-700 transition" id="banner-kotak-slot">
+              <!-- Paste script iklan kotak 300x250 di sini -->
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-950/80 text-red-400 border border-red-800/60">SPONSORED 300x250</span>
+                <i data-lucide="info" class="w-3.5 h-3.5 text-slate-500"></i>
+              </div>
+
+              <div class="text-center my-auto px-2">
+                <div class="w-12 h-12 mx-auto mb-2 rounded-xl bg-gradient-to-tr from-amber-500 to-red-600 flex items-center justify-center text-white shadow-lg shadow-red-900/30">
+                  <i data-lucide="film" class="w-6 h-6"></i>
+                </div>
+                <h5 class="text-sm font-bold text-white leading-tight">ADSTERRA PREMIUM DISPLAY</h5>
+                <p class="text-[11px] text-slate-400 mt-1">Get 1 Month Free Unlimited Ultra HD Corporate Streaming Pass.</p>
+              </div>
+
+              <a href="https://www.contoh-direct-link-adsterra.com/xyz123" target="_blank" rel="noopener noreferrer" class="w-full py-2 text-center text-xs font-bold rounded-lg bg-gradient-to-r from-red-600 to-[#E50914] text-white hover:shadow-lg hover:shadow-red-900/40 transition">
+                Claim VIP Pass (Direct Link)
+              </a>
+            </div>
+          </div>
+          <!-- ========================================================================= -->
+
+          <!-- SECTION 2: FAVORITES / RECENT PICKS -->
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <i data-lucide="heart" class="w-4 h-4 text-rose-500"></i>
+                <span>Favorites</span>
+              </h4>
+              <button class="btn-toast-viewmore text-xs font-semibold text-slate-500 hover:text-white">Manage</button>
+            </div>
+
+            <div class="space-y-3" id="favorites-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC (100% Zero-Config Vanilla JS) -->
+  <script>
+    /* =========================================================
+       [KONFIGURASI IKLAN & MONETISASI - WAJIB DITERAPKAN]
+       ========================================================= */
+    const DIRECT_LINK = "https://www.contoh-direct-link-adsterra.com/xyz123";
+    const BANNER_KOTAK = "<!-- Paste script iklan kotak 300x250 di sini -->";
+    const BANNER_HORIZONTAL = "<!-- Paste script iklan horizontal 728x90 di sini -->";
+
+    /* =========================================================
+       DATA STORE: CELEBRITIES, MOVIES, CHANNELS & ACTIVITY
+       ========================================================= */
+    const CELEBRITIES = [
+      { id: "c1", name: "Megan Fox", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80", role: "Transformers" },
+      { id: "c2", name: "Dua Lipa", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&h=150&q=80", role: "Argylle" },
+      { id: "c3", name: "Cristiano", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&h=150&q=80", role: "Documentary" },
+      { id: "c4", name: "Rishi Chdhry", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80", role: "Creator" },
+      { id: "c5", name: "Eminem", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80", role: "8 Mile" },
+      { id: "c6", name: "Cillian Murphy", avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=150&h=150&q=80", role: "Oppenheimer" }
+    ];
+
+    const HERO_SLIDES = [
+      {
+        id: "m-hero-1",
+        title: "MONEY HEIST",
+        category: "Action / Crime / Thriller • Season 5",
+        matchScore: "98% Match",
+        rating: "TV-MA",
+        duration: "50m per ep",
+        year: "2021",
+        description: "An unusual group of robbers attempt to carry out the most perfect robbery in Spanish history - stealing 2.4 billion euros from the Royal Mint of Spain, masterminded by The Professor.",
+        bannerUrl: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=1400&q=85",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
+      },
+      {
+        id: "m-hero-2",
+        title: "STRANGER THINGS",
+        category: "Sci-Fi / Horror / Mystery • Season 4",
+        matchScore: "99% Match",
+        rating: "TV-14",
+        duration: "1h 15m",
+        year: "2022",
+        description: "When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl.",
+        bannerUrl: "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?auto=format&fit=crop&w=1400&q=85",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+      },
+      {
+        id: "m-hero-3",
+        title: "PEAKY BLINDERS",
+        category: "Historical / Drama / Gangster • Season 6",
+        matchScore: "96% Match",
+        rating: "TV-MA",
+        duration: "58m per ep",
+        year: "2022",
+        description: "A notorious gang in 1919 Birmingham, England, is led by the fierce Tommy Shelby, a crime boss set on moving up in the world no matter the cost.",
+        bannerUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1400&q=85",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+      }
+    ];
+
+    const NEW_RELEASES = [
+      {
+        id: "m-nr-1",
+        title: "Squid Game",
+        category: "Drama / Thriller",
+        year: "2021",
+        rating: "TV-MA",
+        match: "97%",
+        duration: "55m",
+        poster: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        desc: "Hundreds of cash-strapped players accept a strange invitation to compete in children's games for a tempting prize."
+      },
+      {
+        id: "m-nr-2",
+        title: "Wednesday",
+        category: "Comedy / Fantasy",
+        year: "2022",
+        rating: "TV-14",
+        match: "94%",
+        duration: "48m",
+        poster: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        desc: "Smart, sarcastic and a little dead inside, Wednesday Addams investigates a murder spree while making new friends at Nevermore Academy."
+      },
+      {
+        id: "m-nr-3",
+        title: "The Witcher",
+        category: "Fantasy / Action",
+        year: "2023",
+        rating: "TV-MA",
+        match: "92%",
+        duration: "1h 02m",
+        poster: "https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?auto=format&fit=crop&w=600&q=80",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+        desc: "Geralt of Rivia, a mutated monster-hunter for hire, journeys toward his destiny in a turbulent world."
+      }
+    ];
+
+    const POPULAR_MOVIES = [
+      {
+        id: "m-pop-1",
+        title: "Interstellar",
+        category: "Sci-Fi / Adventure",
+        year: "2014",
+        rating: "PG-13",
+        match: "99%",
+        duration: "2h 49m",
+        poster: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=600&q=80",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+        desc: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival."
+      },
+      {
+        id: "m-pop-2",
+        title: "The Dark Knight",
+        category: "Action / Crime",
+        year: "2008",
+        rating: "PG-13",
+        match: "99%",
+        duration: "2h 32m",
+        poster: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        desc: "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests."
+      },
+      {
+        id: "m-pop-3",
+        title: "Cyberpunk: Edgerunners",
+        category: "Anime / Sci-Fi",
+        year: "2022",
+        rating: "TV-MA",
+        match: "95%",
+        duration: "24m",
+        poster: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+        desc: "A street kid trying to survive in a technology and body modification-obsessed city of the future."
+      },
+      {
+        id: "m-pop-4",
+        title: "Oppenheimer",
+        category: "Biography / History",
+        year: "2023",
+        rating: "R",
+        match: "98%",
+        duration: "3h 00m",
+        poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=600&q=80",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        desc: "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb."
+      }
+    ];
+
+    const FAVORITES = [
+      {
+        id: "m-fav-1",
+        title: "Inception",
+        category: "Action / Sci-Fi",
+        year: "2010",
+        rating: "PG-13",
+        poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=200&q=80",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+        desc: "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea."
+      },
+      {
+        id: "m-fav-2",
+        title: "Breaking Bad",
+        category: "Crime / Drama",
+        year: "2013",
+        rating: "TV-MA",
+        poster: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=200&q=80",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+        desc: "A chemistry teacher diagnosed with inoperable lung cancer turns to manufacturing and selling methamphetamine."
+      }
+    ];
+
+    // Master Catalog for Live Search
+    const ALL_MOVIES = [...HERO_SLIDES, ...NEW_RELEASES, ...POPULAR_MOVIES, ...FAVORITES];
+
+    // Watchlist State (Initialized with 2 items)
+    let WATCHLIST = [NEW_RELEASES[0], POPULAR_MOVIES[0], POPULAR_MOVIES[1]];
+
+    /* =========================================================
+       APPLICATION STATE MANAGEMENT
+       ========================================================= */
+    let currentSlideIndex = 0;
+    let activeMovieForModal = null;
+    let isDarkMode = true;
+
+    /* =========================================================
+       HELPER: TOAST NOTIFICATIONS
+       ========================================================= */
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl bg-[#1c1c28] text-white border border-[#2f2f40] shadow-xl text-xs font-semibold transform translate-y-4 opacity-0 transition-all duration-300';
+      
+      let iconName = 'info';
+      if (type === 'success') iconName = 'check-circle-2';
+      if (type === 'ad') iconName = 'external-link';
+
+      toast.innerHTML = `
+        <i data-lucide="${iconName}" class="w-4 h-4 text-[#E50914]"></i>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+      lucide.createIcons({ root: toast });
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    /* =========================================================
+       ATURAN IKLAN #1: DUAL ACTION HANDLER
+       Membuka Video Player Modal + Mengarahkan klik ke DIRECT_LINK (tab baru)
+       ========================================================= */
+    function triggerDualActionPlay(movie) {
+      if (!movie) return;
+
+      // 1. Buka Tab Baru ke DIRECT_LINK Monetisasi
+      try {
+        window.open(DIRECT_LINK, '_blank', 'noopener,noreferrer');
+      } catch (e) {
+        console.warn('Popup blocked or direct link error:', e);
+      }
+
+      // 2. Munculkan Modal Video Player Interaktif di Layar
+      openVideoModal(movie);
+
+      showToast(`Opening "${movie.title}" & sponsor stream`, 'ad');
+    }
+
+    /* =========================================================
+       MODAL VIDEO PLAYER LOGIC
+       ========================================================= */
+    const videoModal = document.getElementById('video-modal');
+    const videoModalCard = document.getElementById('video-modal-card');
+    const mainVideoPlayer = document.getElementById('main-video-player');
+    const videoSource = document.getElementById('video-source');
+
+    function openVideoModal(movie) {
+      activeMovieForModal = movie;
+      document.getElementById('modal-movie-title').textContent = movie.title;
+      document.getElementById('modal-movie-category').textContent = movie.category || 'General';
+      document.getElementById('modal-movie-year').textContent = movie.year || '2023';
+      document.getElementById('modal-movie-rating').textContent = movie.rating || 'TV-14';
+      document.getElementById('modal-movie-match').textContent = movie.matchScore || movie.match || '95% Match';
+      document.getElementById('modal-movie-desc').textContent = movie.description || movie.desc || 'Premium video stream.';
+
+      videoSource.src = movie.videoUrl || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4";
+      mainVideoPlayer.poster = movie.bannerUrl || movie.poster || '';
+      mainVideoPlayer.load();
+
+      // Animate open
+      videoModal.classList.remove('opacity-0', 'pointer-events-none');
+      videoModalCard.classList.remove('scale-95');
+      videoModalCard.classList.add('scale-100');
+
+      mainVideoPlayer.play().catch(() => {});
+    }
+
+    function closeVideoModal() {
+      mainVideoPlayer.pause();
+      videoModal.classList.add('opacity-0', 'pointer-events-none');
+      videoModalCard.classList.remove('scale-100');
+      videoModalCard.classList.add('scale-95');
+    }
+
+    document.getElementById('modal-close-btn').addEventListener('click', closeVideoModal);
+    videoModal.addEventListener('click', (e) => {
+      if (e.target === videoModal) closeVideoModal();
+    });
+
+    document.getElementById('modal-directlink-btn').addEventListener('click', () => {
+      window.open(DIRECT_LINK, '_blank', 'noopener,noreferrer');
+      showToast('Opening Direct Sponsor Stream', 'ad');
+    });
+
+    document.getElementById('modal-watchlist-btn').addEventListener('click', () => {
+      if (activeMovieForModal) {
+        addToWatchlist(activeMovieForModal);
+      }
+    });
+
+    /* =========================================================
+       WATCHLIST MANAGEMENT
+       ========================================================= */
+    function addToWatchlist(movie) {
+      if (!WATCHLIST.some(m => m.title === movie.title)) {
+        WATCHLIST.push(movie);
+        updateWatchlistBadge();
+        renderWatchlistView();
+        showToast(`Added "${movie.title}" to Watch List`, 'success');
+      } else {
+        showToast(`"${movie.title}" is already in your Watch List`);
+      }
+    }
+
+    function removeFromWatchlist(title) {
+      WATCHLIST = WATCHLIST.filter(m => m.title !== title);
+      updateWatchlistBadge();
+      renderWatchlistView();
+      showToast(`Removed from Watch List`);
+    }
+
+    function updateWatchlistBadge() {
+      const badge = document.getElementById('watchlist-badge');
+      if (badge) badge.textContent = WATCHLIST.length;
+    }
+
+    /* =========================================================
+       HERO CAROUSEL LOGIC
+       ========================================================= */
+    function renderHeroSlide(index) {
+      currentSlideIndex = index;
+      const slide = HERO_SLIDES[index];
+      if (!slide) return;
+
+      const img = document.getElementById('hero-bg-img');
+      img.style.opacity = '0.3';
+      setTimeout(() => {
+        img.src = slide.bannerUrl;
+        img.style.opacity = '1';
+      }, 200);
+
+      document.getElementById('hero-title').textContent = slide.title;
+      document.getElementById('hero-category').textContent = slide.category;
+      document.getElementById('hero-match').textContent = slide.matchScore;
+      document.getElementById('hero-rating').textContent = slide.rating;
+      document.getElementById('hero-duration').textContent = slide.duration;
+      document.getElementById('hero-description').textContent = slide.description;
+
+      // Update indicator pills
+      const indicators = document.querySelectorAll('.hero-indicator');
+      indicators.forEach((ind, i) => {
+        if (i === index) {
+          ind.className = 'hero-indicator w-8 h-1.5 rounded-full bg-[#E50914] transition-all';
+        } else {
+          ind.className = 'hero-indicator w-2.5 h-1.5 rounded-full bg-white/30 hover:bg-white/60 transition-all';
+        }
+      });
+    }
+
+    document.querySelectorAll('.hero-indicator').forEach((btn, idx) => {
+      btn.addEventListener('click', () => renderHeroSlide(idx));
+    });
+
+    document.getElementById('hero-watch-btn').addEventListener('click', () => {
+      triggerDualActionPlay(HERO_SLIDES[currentSlideIndex]);
+    });
+
+    document.getElementById('hero-add-btn').addEventListener('click', () => {
+      addToWatchlist(HERO_SLIDES[currentSlideIndex]);
+    });
+
+    // Auto rotate hero slide every 8 seconds
+    setInterval(() => {
+      currentSlideIndex = (currentSlideIndex + 1) % HERO_SLIDES.length;
+      renderHeroSlide(currentSlideIndex);
+    }, 8000);
+
+    /* =========================================================
+       DYNAMIC CARD BUILDER (With Poster & Play click bound to Dual-Action)
+       ========================================================= */
+    function createMovieCardHTML(movie, layout = 'standard') {
+      const matchText = movie.match || movie.matchScore || '96% Match';
+      const yearText = movie.year || '2022';
+      const ratingText = movie.rating || 'TV-MA';
+
+      return `
+        <div class="movie-card group relative bg-[#13131a] rounded-xl overflow-hidden border border-[#23232f] hover:border-slate-600 transition-all duration-300 shadow-md flex flex-col justify-between" data-title="${encodeURIComponent(movie.title)}">
+          <!-- Poster / Thumbnail Container (Dual Action on Click) -->
+          <div class="relative aspect-[16/10] overflow-hidden bg-slate-900 cursor-pointer card-poster-trigger">
+            <img src="${movie.poster || movie.bannerUrl}" alt="${movie.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0d0d12] via-transparent to-black/30"></div>
+            
+            <!-- Play Overlay Badge -->
+            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40">
+              <span class="w-12 h-12 rounded-full bg-[#E50914] text-white flex items-center justify-center shadow-lg shadow-red-900/50 transform group-hover:scale-110 transition-transform">
+                <i data-lucide="play" class="w-5 h-5 fill-white ml-0.5"></i>
+              </span>
+            </div>
+
+            <span class="absolute top-2.5 left-2.5 px-1.5 py-0.5 text-[10px] font-bold uppercase bg-black/70 backdrop-blur-md rounded text-white border border-white/10">
+              ${ratingText}
+            </span>
+            <span class="absolute top-2.5 right-2.5 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400 bg-emerald-950/80 rounded border border-emerald-800">
+              ${matchText}
+            </span>
+          </div>
+
+          <!-- Content Details -->
+          <div class="p-3.5 flex flex-col justify-between flex-1">
+            <div>
+              <div class="flex items-center justify-between gap-1 mb-1">
+                <h4 class="text-sm font-bold text-white group-hover:text-[#E50914] transition truncate">${movie.title}</h4>
+                <span class="text-[11px] text-slate-400 shrink-0">${yearText}</span>
+              </div>
+              <p class="text-xs text-slate-400 truncate">${movie.category}</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-3.5 pt-2.5 border-t border-[#1e1e28] flex items-center justify-between gap-2">
+              <button class="btn-card-play flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-white/10 hover:bg-[#E50914] text-white text-xs font-semibold transition">
+                <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+                <span>Watch</span>
+              </button>
+              <button class="btn-card-add p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition" title="Add to Watchlist">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* =========================================================
+       RENDER CORE FEED SECTIONS
+       ========================================================= */
+    function renderCelebrities() {
+      const container = document.getElementById('celebrity-stories-bar');
+      container.innerHTML = CELEBRITIES.map(c => `
+        <div class="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group celeb-item" data-name="${c.name}">
+          <div class="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-[#E50914] via-red-500 to-amber-500 group-hover:scale-105 transition">
+            <img src="${c.avatar}" alt="${c.name}" class="w-full h-full rounded-full object-cover border-2 border-[#0b0b0e]">
+          </div>
+          <span class="text-[11px] font-medium text-slate-300 group-hover:text-white truncate max-w-[68px] text-center">${c.name}</span>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.celeb-item').forEach(item => {
+        item.addEventListener('click', () => {
+          showToast(`Viewing stories & films by ${item.dataset.name}`);
+        });
+      });
+    }
+
+    function renderNewReleases() {
+      const container = document.getElementById('new-release-grid');
+      container.innerHTML = NEW_RELEASES.map(m => createMovieCardHTML(m)).join('');
+      attachCardListeners(container, NEW_RELEASES);
+    }
+
+    function renderTopRated() {
+      const container = document.getElementById('top-rated-grid');
+      container.innerHTML = POPULAR_MOVIES.map(m => createMovieCardHTML(m)).join('');
+      attachCardListeners(container, POPULAR_MOVIES);
+    }
+
+    function renderRightRailPopular() {
+      const container = document.getElementById('popular-movies-list');
+      container.innerHTML = POPULAR_MOVIES.slice(0, 3).map(m => `
+        <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition group rail-item" data-title="${encodeURIComponent(m.title)}">
+          <img src="${m.poster}" alt="${m.title}" class="w-14 h-16 rounded-lg object-cover bg-slate-800">
+          <div class="flex-1 min-w-0">
+            <h5 class="text-xs font-bold text-white group-hover:text-[#E50914] truncate transition">${m.title}</h5>
+            <p class="text-[11px] text-slate-400 truncate">${m.category}</p>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-[10px] font-semibold text-emerald-400">${m.match}</span>
+              <span class="text-[10px] text-slate-500">•</span>
+              <span class="text-[10px] text-slate-400">${m.duration}</span>
+            </div>
+          </div>
+          <button class="btn-rail-play p-2 rounded-lg bg-white/5 hover:bg-[#E50914] text-white transition" title="Play">
+            <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+          </button>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.rail-item').forEach(el => {
+        const title = decodeURIComponent(el.dataset.title);
+        const movie = ALL_MOVIES.find(m => m.title === title);
+        el.addEventListener('click', () => triggerDualActionPlay(movie));
+      });
+    }
+
+    function renderRightRailFavorites() {
+      const container = document.getElementById('favorites-list');
+      container.innerHTML = FAVORITES.map(m => `
+        <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition group fav-item" data-title="${encodeURIComponent(m.title)}">
+          <img src="${m.poster}" alt="${m.title}" class="w-12 h-12 rounded-lg object-cover bg-slate-800">
+          <div class="flex-1 min-w-0">
+            <h5 class="text-xs font-bold text-white group-hover:text-rose-400 truncate transition">${m.title}</h5>
+            <span class="text-[10px] text-slate-400 truncate block">${m.category}</span>
+          </div>
+          <button class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/20 transition">
+            <i data-lucide="heart" class="w-4 h-4 fill-current"></i>
+          </button>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.fav-item').forEach(el => {
+        const title = decodeURIComponent(el.dataset.title);
+        const movie = ALL_MOVIES.find(m => m.title === title);
+        el.addEventListener('click', () => triggerDualActionPlay(movie));
+      });
+    }
+
+    function attachCardListeners(parent, list) {
+      parent.querySelectorAll('.movie-card').forEach(card => {
+        const title = decodeURIComponent(card.dataset.title);
+        const movie = list.find(m => m.title === title) || ALL_MOVIES.find(m => m.title === title);
+
+        // Poster click -> Dual action
+        const poster = card.querySelector('.card-poster-trigger');
+        if (poster) {
+          poster.addEventListener('click', () => triggerDualActionPlay(movie));
+        }
+
+        // Watch button -> Dual action
+        const playBtn = card.querySelector('.btn-card-play');
+        if (playBtn) {
+          playBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            triggerDualActionPlay(movie);
+          });
+        }
+
+        // Add button -> Watchlist
+        const addBtn = card.querySelector('.btn-card-add');
+        if (addBtn) {
+          addBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            addToWatchlist(movie);
+          });
+        }
+      });
+    }
+
+    /* =========================================================
+       SUB-VIEW RENDERERS (Watchlist, Coming Soon, Discovery, etc.)
+       ========================================================= */
+    function renderWatchlistView() {
+      const container = document.getElementById('watchlist-items-grid');
+      if (WATCHLIST.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-16 text-center text-slate-500">
+            <i data-lucide="bookmark" class="w-12 h-12 mx-auto mb-2 stroke-1"></i>
+            <p class="text-sm font-semibold">Your Watch List is currently empty.</p>
+            <p class="text-xs text-slate-600 mt-1">Browse Home or Trending to bookmark films.</p>
+          </div>
+        `;
+        lucide.createIcons({ root: container });
+        return;
+      }
+
+      container.innerHTML = WATCHLIST.map(m => `
+        <div class="relative bg-[#13131a] rounded-xl overflow-hidden border border-[#23232f] p-3 flex flex-col justify-between">
+          <div class="flex gap-3">
+            <img src="${m.poster || m.bannerUrl}" class="w-20 h-28 object-cover rounded-lg bg-slate-800 shrink-0 cursor-pointer" onclick="triggerDualActionPlay(ALL_MOVIES.find(x => x.title === '${m.title}'))">
+            <div class="flex-1 min-w-0">
+              <h4 class="text-sm font-bold text-white truncate">${m.title}</h4>
+              <p class="text-xs text-slate-400 mt-0.5">${m.category}</p>
+              <span class="inline-block mt-2 text-[10px] px-2 py-0.5 bg-slate-800 rounded text-slate-300">${m.year || '2022'} • ${m.rating || 'TV-MA'}</span>
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+            <button onclick="triggerDualActionPlay(ALL_MOVIES.find(x => x.title === '${m.title}'))" class="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-[#E50914] text-white hover:bg-[#C11119] transition">
+              Watch Now
+            </button>
+            <button onclick="removeFromWatchlist('${m.title}')" class="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition" title="Remove">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons({ root: container });
+    }
+
+    function renderComingSoon() {
+      const container = document.getElementById('coming-soon-list');
+      const comingItems = [
+        { title: "Dune: Part Two (Extended Edition)", date: "Next Friday", category: "Sci-Fi / Epic", banner: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1000&q=80" },
+        { title: "Avatar: Fire and Ash", date: "December 2026", category: "Sci-Fi / Adventure", banner: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80" },
+        { title: "Blade Runner 2099", date: "Q1 2027", category: "Cyberpunk / Mystery", banner: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1000&q=80" }
+      ];
+
+      container.innerHTML = comingItems.map(item => `
+        <div class="relative rounded-2xl overflow-hidden border border-[#23232f] bg-[#121219] p-5 flex flex-col md:flex-row gap-5 items-center">
+          <img src="${item.banner}" alt="${item.title}" class="w-full md:w-56 h-36 object-cover rounded-xl">
+          <div class="flex-1">
+            <span class="text-xs font-bold text-[#E50914] tracking-wider uppercase">${item.date}</span>
+            <h4 class="text-lg font-bold text-white mt-1">${item.title}</h4>
+            <p class="text-xs text-slate-400 mt-1">${item.category}</p>
+            <p class="text-xs text-slate-300 mt-2 line-clamp-2">Exclusive premiere reserved for enterprise streaming accounts and VIP subscribers.</p>
+          </div>
+          <button onclick="window.open(DIRECT_LINK, '_blank'); showToast('Reminder set for ${item.title}');" class="w-full md:w-auto px-4 py-2.5 text-xs font-bold bg-white/10 hover:bg-[#E50914] text-white rounded-xl transition shrink-0">
+            Set Reminder
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function renderDiscovery() {
+      const container = document.getElementById('discovery-genres-grid');
+      const genres = [
+        { name: "Action & Adventure", count: "1,240 titles", icon: "swords", color: "from-red-600 to-orange-600" },
+        { name: "Sci-Fi & Cyberpunk", count: "830 titles", icon: "zap", color: "from-cyan-600 to-blue-600" },
+        { name: "Crime & Thrillers", count: "950 titles", icon: "shield-alert", color: "from-purple-600 to-indigo-600" },
+        { name: "Documentaries", count: "420 titles", icon: "video", color: "from-emerald-600 to-teal-600" },
+        { name: "Animation & Anime", count: "1,100 titles", icon: "sparkles", color: "from-pink-600 to-rose-600" },
+        { name: "Drama Classics", count: "780 titles", icon: "film", color: "from-amber-600 to-yellow-600" },
+        { name: "Horror & Mystery", count: "510 titles", icon: "moon", color: "from-slate-700 to-slate-900" },
+        { name: "Kids & Family", count: "640 titles", icon: "heart", color: "from-blue-500 to-emerald-500" }
+      ];
+
+      container.innerHTML = genres.map(g => `
+        <div onclick="window.open(DIRECT_LINK, '_blank'); showToast('Browsing ${g.name}');" class="p-5 rounded-2xl bg-gradient-to-br ${g.color} text-white cursor-pointer hover:scale-105 transition-transform duration-300 shadow-lg">
+          <i data-lucide="${g.icon}" class="w-6 h-6 mb-3 opacity-90"></i>
+          <h4 class="text-sm font-bold">${g.name}</h4>
+          <span class="text-[11px] opacity-80 mt-0.5 block">${g.count}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderFriends() {
+      const container = document.getElementById('friends-detailed-list');
+      const activities = [
+        { name: "Sarah Jenkins", role: "UX Designer", movie: "Cyberpunk: Edgerunners", time: "Watching right now", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" },
+        { name: "Alex Rover", role: "DevOps Engineer", movie: "Interstellar", time: "Finished 20m ago", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" },
+        { name: "Elena Rostova", role: "Art Director", movie: "Money Heist Season 5", time: "Watching Ep 8", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=100&q=80" }
+      ];
+
+      container.innerHTML = activities.map(a => `
+        <div class="flex items-center justify-between p-4 rounded-xl bg-[#14141c] border border-[#23232f]">
+          <div class="flex items-center gap-3">
+            <img src="${a.avatar}" class="w-10 h-10 rounded-full object-cover">
+            <div>
+              <h5 class="text-sm font-bold text-white">${a.name} <span class="text-xs text-slate-500 font-normal">(${a.role})</span></h5>
+              <p class="text-xs text-[#E50914] font-medium">${a.movie} • <span class="text-slate-400 font-normal">${a.time}</span></p>
+            </div>
+          </div>
+          <button onclick="window.open(DIRECT_LINK, '_blank'); showToast('Syncing stream with ${a.name}');" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-[#E50914] text-white transition">
+            Join Stream
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function renderParties() {
+      const container = document.getElementById('watch-parties-grid');
+      container.innerHTML = `
+        <div class="p-6 rounded-2xl bg-[#14141c] border border-[#23232f] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">ACTIVE ROOM</span>
+              <span class="text-xs text-slate-400">14 Viewers</span>
+            </div>
+            <h4 class="text-base font-bold text-white">Friday Night Marathon: Money Heist</h4>
+            <p class="text-xs text-slate-400 mt-1">Host: Studio Engineering Team</p>
+          </div>
+          <div class="mt-6 flex items-center gap-3">
+            <button onclick="triggerDualActionPlay(HERO_SLIDES[0])" class="flex-1 py-2 text-xs font-bold bg-[#E50914] hover:bg-[#C11119] text-white rounded-xl transition">
+              Enter Party Room
+            </button>
+            <button onclick="window.open(DIRECT_LINK, '_blank')" class="p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition">
+              <i data-lucide="share-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+        <div class="p-6 rounded-2xl bg-[#14141c] border border-[#23232f] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800">STARTS IN 45M</span>
+              <span class="text-xs text-slate-400">32 RSVPs</span>
+            </div>
+            <h4 class="text-base font-bold text-white">Stranger Things Season Finale Sync</h4>
+            <p class="text-xs text-slate-400 mt-1">Host: Corporate Cinephiles Club</p>
+          </div>
+          <div class="mt-6 flex items-center gap-3">
+            <button onclick="triggerDualActionPlay(HERO_SLIDES[1])" class="flex-1 py-2 text-xs font-bold bg-white/10 hover:bg-[#E50914] text-white rounded-xl transition">
+              RSVP Room
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMedia() {
+      const container = document.getElementById('media-library-grid');
+      container.innerHTML = `
+        <div class="p-4 rounded-xl bg-[#14141c] border border-[#23232f] text-center">
+          <i data-lucide="download-cloud" class="w-8 h-8 text-[#E50914] mx-auto mb-2"></i>
+          <h4 class="text-xs font-bold text-white">Offline Vault</h4>
+          <p class="text-[11px] text-slate-400 mt-1">4.2 GB used of 50 GB offline cache</p>
+        </div>
+        <div class="p-4 rounded-xl bg-[#14141c] border border-[#23232f] text-center">
+          <i data-lucide="headphones" class="w-8 h-8 text-cyan-400 mx-auto mb-2"></i>
+          <h4 class="text-xs font-bold text-white">Dolby Atmos Audio Stems</h4>
+          <p class="text-[11px] text-slate-400 mt-1">Multi-channel master outputs</p>
+        </div>
+        <div class="p-4 rounded-xl bg-[#14141c] border border-[#23232f] text-center">
+          <i data-lucide="subtitles" class="w-8 h-8 text-emerald-400 mx-auto mb-2"></i>
+          <h4 class="text-xs font-bold text-white">Subtitles & Transcripts</h4>
+          <p class="text-[11px] text-slate-400 mt-1">24 Languages synchronized</p>
+        </div>
+      `;
+    }
+
+    /* =========================================================
+       1. SISTEM HALAMAN / MENU SIDEBAR (State Management)
+       ========================================================= */
+    const navButtons = document.querySelectorAll('.nav-item');
+    const viewPanels = document.querySelectorAll('.view-panel');
+
+    function switchNav(targetNavId) {
+      // 1. Update button styling
+      navButtons.forEach(btn => {
+        const isTarget = btn.getAttribute('data-nav') === targetNavId;
+        if (isTarget) {
+          btn.className = 'nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-white bg-[#E50914] shadow-md shadow-red-900/20';
+        } else {
+          btn.className = 'nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:text-white hover:bg-white/5';
+        }
+      });
+
+      // 2. Switch visible view panel
+      viewPanels.forEach(panel => {
+        if (panel.id === `view-${targetNavId}`) {
+          panel.classList.remove('hidden');
+        } else {
+          panel.classList.add('hidden');
+        }
+      });
+
+      // Clear search when switching tabs
+      clearSearch();
+
+      // Trigger lazy render for sub views
+      if (targetNavId === 'watchlist') renderWatchlistView();
+      if (targetNavId === 'coming-soon') renderComingSoon();
+      if (targetNavId === 'discovery') renderDiscovery();
+      if (targetNavId === 'friends') renderFriends();
+      if (targetNavId === 'parties') renderParties();
+      if (targetNavId === 'media') renderMedia();
+
+      // Close mobile drawer if open
+      closeMobileMenu();
+
+      // Re-create icons for updated view
+      lucide.createIcons();
+    }
+
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const navId = btn.getAttribute('data-nav');
+        switchNav(navId);
+      });
+    });
+
+    /* =========================================================
+       3. LIVE SEARCH FILTER
+       ========================================================= */
+    const searchInput = document.getElementById('search-input');
+    const searchClearBtn = document.getElementById('search-clear-btn');
+    const searchResultsSection = document.getElementById('search-results-section');
+    const searchResultsGrid = document.getElementById('search-results-grid');
+    const searchQueryDisplay = document.getElementById('search-query-display');
+    const searchCount = document.getElementById('search-count');
+
+    function executeLiveSearch(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        clearSearch();
+        return;
+      }
+
+      searchClearBtn.classList.remove('hidden');
+      searchResultsSection.classList.remove('hidden');
+      searchQueryDisplay.textContent = `"${query}"`;
+
+      // Filter catalog
+      const matched = ALL_MOVIES.filter(m => 
+        m.title.toLowerCase().includes(q) ||
+        (m.category && m.category.toLowerCase().includes(q)) ||
+        (m.desc && m.desc.toLowerCase().includes(q)) ||
+        (m.description && m.description.toLowerCase().includes(q))
+      );
+
+      searchCount.textContent = `${matched.length} found`;
+
+      if (matched.length === 0) {
+        searchResultsGrid.innerHTML = `
+          <div class="col-span-full py-10 text-center text-slate-500">
+            <i data-lucide="search-x" class="w-10 h-10 mx-auto mb-2 opacity-60"></i>
+            <p class="text-sm font-semibold">No streaming titles matched "${query}"</p>
+            <p class="text-xs text-slate-600 mt-1">Try keywords like 'Action', 'Sci-Fi', 'Money', or 'Heist'.</p>
+          </div>
+        `;
+      } else {
+        searchResultsGrid.innerHTML = matched.map(m => createMovieCardHTML(m)).join('');
+        attachCardListeners(searchResultsGrid, matched);
+      }
+
+      lucide.createIcons({ root: searchResultsGrid });
+    }
+
+    function clearSearch() {
+      searchInput.value = '';
+      searchClearBtn.classList.add('hidden');
+      searchResultsSection.classList.add('hidden');
+      searchResultsGrid.innerHTML = '';
+    }
+
+    searchInput.addEventListener('input', (e) => executeLiveSearch(e.target.value));
+    searchClearBtn.addEventListener('click', clearSearch);
+
+    /* =========================================================
+       4. FITUR NIGHT & LIGHT MODE TOGGLE
+       Beralih mulus antara Dark Mode elegan (#0b0b0e) dan Light Mode (#f8fafc)
+       ========================================================= */
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+    const appBody = document.getElementById('app-body');
+    const mainSidebar = document.getElementById('main-sidebar');
+    const mainHeader = document.getElementById('main-header');
+    const rightRail = document.getElementById('right-rail');
+
+    function applyTheme(isDark) {
+      isDarkMode = isDark;
+      const htmlEl = document.documentElement;
+
+      if (isDark) {
+        htmlEl.classList.add('dark');
+        appBody.classList.remove('bg-[#f8fafc]', 'text-slate-900');
+        appBody.classList.add('bg-[#0b0b0e]', 'text-slate-100');
+
+        mainSidebar.classList.remove('bg-white', 'border-slate-200');
+        mainSidebar.classList.add('bg-[#101015]', 'border-[#1f1f28]');
+
+        mainHeader.classList.remove('bg-white/95', 'border-slate-200');
+        mainHeader.classList.add('bg-[#0b0b0e]/95', 'border-[#1a1a24]');
+
+        rightRail.classList.remove('bg-slate-50', 'border-slate-200');
+        rightRail.classList.add('bg-[#0f0f15]', 'border-[#1f1f2a]');
+
+        themeText.textContent = 'Night';
+        themeIcon.setAttribute('data-lucide', 'moon');
+        themeIcon.className = 'w-4 h-4 text-amber-400';
+      } else {
+        htmlEl.classList.remove('dark');
+        appBody.classList.remove('bg-[#0b0b0e]', 'text-slate-100');
+        appBody.classList.add('bg-[#f8fafc]', 'text-slate-900');
+
+        mainSidebar.classList.remove('bg-[#101015]', 'border-[#1f1f28]');
+        mainSidebar.classList.add('bg-white', 'border-slate-200');
+
+        mainHeader.classList.remove('bg-[#0b0b0e]/95', 'border-[#1a1a24]');
+        mainHeader.classList.add('bg-white/95', 'border-slate-200');
+
+        rightRail.classList.remove('bg-[#0f0f15]', 'border-[#1f1f2a]');
+        rightRail.classList.add('bg-slate-50', 'border-slate-200');
+
+        themeText.textContent = 'Light';
+        themeIcon.setAttribute('data-lucide', 'sun');
+        themeIcon.className = 'w-4 h-4 text-amber-500';
+      }
+      lucide.createIcons();
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      applyTheme(!isDarkMode);
+      showToast(isDarkMode ? 'Switched to Night Mode (#0b0b0e)' : 'Switched to Light Mode (#f8fafc)');
+    });
+
+    /* =========================================================
+       5. INTERAKTIF TAMBAHAN (Notification, Mobile Drawer, etc.)
+       ========================================================= */
+    // Notification Toast
+    document.getElementById('btn-notification').addEventListener('click', () => {
+      showToast('No new notifications. All 4K streams nominal.');
+    });
+
+    // VIP Stream Top Nav Click
+    document.getElementById('btn-direct-link-top').addEventListener('click', () => {
+      window.open(DIRECT_LINK, '_blank', 'noopener,noreferrer');
+      showToast('Opening VIP Stream Partner (Direct Link)', 'ad');
+    });
+
+    // Profile & Logout Buttons
+    document.getElementById('btn-profile-badge').addEventListener('click', () => {
+      showToast('Biradhwaj (Graphic Designer) - Active Subscription');
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      showToast('Session locked. Logging out...');
+    });
+
+    // Generic View More Toasts
+    document.querySelectorAll('.btn-toast-viewmore').forEach(btn => {
+      btn.addEventListener('click', () => {
+        showToast('Loading additional movie catalog...');
+      });
+    });
+
+    // Clear Watchlist Button
+    const clearWatchlistBtn = document.getElementById('btn-clear-watchlist');
+    if (clearWatchlistBtn) {
+      clearWatchlistBtn.addEventListener('click', () => {
+        WATCHLIST = [];
+        updateWatchlistBadge();
+        renderWatchlistView();
+        showToast('Watchlist cleared');
+      });
+    }
+
+    // Save Settings Button
+    const saveSettingsBtn = document.getElementById('btn-save-settings');
+    if (saveSettingsBtn) {
+      saveSettingsBtn.addEventListener('click', () => {
+        showToast('Streaming preferences saved successfully!', 'success');
+      });
+    }
+
+    // Mobile Sidebar Drawer Toggle
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const mobileBackdrop = document.getElementById('mobile-backdrop');
+
+    function openMobileMenu() {
+      mainSidebar.classList.remove('-translate-x-full');
+      mobileBackdrop.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function closeMobileMenu() {
+      mainSidebar.classList.add('-translate-x-full');
+      mobileBackdrop.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    mobileMenuToggle.addEventListener('click', openMobileMenu);
+    mobileBackdrop.addEventListener('click', closeMobileMenu);
+
+    /* =========================================================
+       INIT APPLICATION ON LOAD
+       ========================================================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCelebrities();
+      renderHeroSlide(0);
+      renderNewReleases();
+      renderTopRated();
+      renderRightRailPopular();
+      renderRightRailFavorites();
+      updateWatchlistBadge();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
